@@ -4,7 +4,7 @@ import telebot
 
 from utils import detect_lang
 
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
 
@@ -12,7 +12,7 @@ api_key = os.getenv("ENRU_OPENAPI_KEY")
 bot_key = os.getenv("BOT_KEY")
 
 bot = telebot.TeleBot(bot_key)
-llm = OpenAI(openai_api_key=api_key)
+llm = ChatOpenAI(openai_api_key=api_key, model_name="gpt-3.5-turbo", temperature=0)
 
 def translate_msg(msg: str) -> str:
     """Translates the given message from English to Russian or vice versa."""
@@ -25,34 +25,31 @@ def translate_msg(msg: str) -> str:
         translation_lang = "russian"
         current_lang = "english"
 
-    prompt = f'Translate the message from {current_lang} to {translation_lang}.'\
-             f'Message: {msg}'
-    print(prompt)
+    prompt_template = PromptTemplate.from_template("Translate the message from {current_lang} to {translation_lang}."
+                                                   "Message: {msg}")
+    prompt = prompt_template.format(current_lang=current_lang, translation_lang=translation_lang, msg=msg)
+
     return llm.predict(prompt)
 
-@bot.inline_handler(lambda query: query.query == 'text')
-def query_text(message):
-    response = translate_msg(message.text)
 
-    print(message.text)
-    print(11)
-    print(response)
+@bot.message_handler(func=lambda message: True, content_types=['text'])
+def echo_all(message: telebot.types.Message) -> None:
+    """Handles all messages that are not commands."""
+    response = translate_msg(message.text)
     bot.reply_to(message, response)
+
 
 @bot.message_handler(commands=['start'])
-def start_message(message):
-    bot.send_message(message.chat.id, """Hello! I am your OpenAI translator bot.
-                     I translate English to Russian and vice versa!""")
+def start_message(message: telebot.types.Message) -> None:
+    bot.send_message(message.chat.id, """Hello! I am your OpenAI-based translator bot.
+                      I translate English to Russian and vice versa!""")
 
 
-@bot.message_handler(func=lambda m: True)
-def echo_all(message):
-    response = translate_msg(message.text)
+@bot.message_handler(commands=['help'])
+def help_message(message: telebot.types.Message) -> None:
+    bot.send_message(message.chat.id, """I am your OpenAI-based translator bot.
+                      Just tag me in your message and I will translate it for you!""")
 
-    print(message.text)
-    print(11)
-    print(response)
-    bot.reply_to(message, response)
 
 if __name__ == "__main__":
-    bot.polling()
+    bot.polling(non_stop=True)
