@@ -16,4 +16,3 @@ def detect_lang(text):
     except Exception as e:
         lang = 'unknown'
     return lang
-
