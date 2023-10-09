@@ -1,13 +1,14 @@
 import os
 import openai
 import telebot
+from dotenv import load_dotenv
 
 from utils import detect_lang
 
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
-
+load_dotenv()
 api_key = os.getenv("ENRU_OPENAPI_KEY")
 bot_key = os.getenv("BOT_KEY")
 
@@ -18,18 +19,60 @@ def translate_msg(msg: str) -> str:
     """Translates the given message from English to Russian or vice versa."""
     curr_lang = detect_lang(msg)
 
-    if curr_lang == "ru":
-        translation_lang = "english"
-        current_lang = "russian"
+    if curr_lang == "nl":
+        translation_lang = "English"
+        second_lang = "Russian"
+        current_lang = "Dutch"
+    elif curr_lang == "en":
+        translation_lang = "Dutch"
+        second_lang = "Russian"
+        current_lang = "English"
     else:
-        translation_lang = "russian"
-        current_lang = "english"
+        translation_lang = "English"
+        second_lang = "Dutch"
+        current_lang = curr_lang
 
-    prompt_template = PromptTemplate.from_template("Translate the message from {current_lang} to {translation_lang}."
+    prompt_template = PromptTemplate.from_template("Translate the message from {current_lang} to"
+                                                   "1) {translation_lang} and 2) {second_lang}."
                                                    "Message: {msg}")
-    prompt = prompt_template.format(current_lang=current_lang, translation_lang=translation_lang, msg=msg)
+    prompt = prompt_template.format(current_lang=current_lang,
+                                    translation_lang=translation_lang,
+                                    msg=msg)
 
     return llm.predict(prompt)
+
+
+def describe_msg(msg: str) -> str:
+    """Describes the given message."""
+    prompt_template = PromptTemplate.from_template(
+                                "I have two options of translation here:"
+                                "{msg}"
+                                "Please, describe what translated message means"
+                                " 1) in English and 2) in Russian. "
+                                                   )
+    prompt = prompt_template.format(msg=msg)
+
+    return llm.predict(prompt)
+
+
+@bot.message_handler(commands='start')
+def start_message(message: telebot.types.Message) -> None:
+    bot.send_message(message.chat.id, """Hello! I am your OpenAI-based translator bot.
+                      I translate English to Russian and vice versa!""")
+
+
+@bot.message_handler(commands='help')
+def help_message(message: telebot.types.Message) -> None:
+    bot.send_message(message.chat.id, """I am your OpenAI-based translator bot.
+                      Just tag me in your message and I will translate it for you!""")
+    
+# @bot.message_handler(commands='describe')
+# def help_message(message: telebot.types.Message) -> None:
+#     """Describes the given message in English and Russian."""
+#     upd = bot.get_updates()
+#     print(upd)
+    # response = describe_msg(upd[-1].text)
+    # bot.send_message(message.chat.id, response)
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
@@ -39,17 +82,5 @@ def echo_all(message: telebot.types.Message) -> None:
     bot.reply_to(message, response)
 
 
-@bot.message_handler(commands=['start'])
-def start_message(message: telebot.types.Message) -> None:
-    bot.send_message(message.chat.id, """Hello! I am your OpenAI-based translator bot.
-                      I translate English to Russian and vice versa!""")
-
-
-@bot.message_handler(commands=['help'])
-def help_message(message: telebot.types.Message) -> None:
-    bot.send_message(message.chat.id, """I am your OpenAI-based translator bot.
-                      Just tag me in your message and I will translate it for you!""")
-
-
-if __name__ == "__main__":
-    bot.polling(non_stop=True)
+if __name__ == '__main__':
+    bot.polling()

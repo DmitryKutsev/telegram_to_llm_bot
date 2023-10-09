@@ -1,4 +1,4 @@
-from langdetect import detect
+from langdetect import detect, LangDetectException
 
 def detect_lang(text):
     """
@@ -13,6 +13,6 @@ def detect_lang(text):
     """
     try:
         lang = detect(text)
-    except Exception as e:
+    except LangDetectException as e:
         lang = 'unknown'
     return lang
