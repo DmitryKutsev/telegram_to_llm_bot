@@ -23,17 +23,21 @@ def translate_msg(msg: str) -> str:
     """Translates the given message from English to Russian or vice versa."""
     curr_lang = detect_lang(msg)
 
-    if curr_lang == "nl":
-        translation_lang = "English"
-        second_lang = "Russian"
-        current_lang = "Dutch"
-    elif curr_lang == "en":
+    if curr_lang == "en":
         translation_lang = "Dutch"
         second_lang = "Russian"
         current_lang = "English"
-    else:
+    elif curr_lang == "nl":
         translation_lang = "English"
         second_lang = "Russian"
+        current_lang = "Dutch"
+    elif curr_lang == "ru":
+        translation_lang = "Dutch"
+        second_lang = "English"
+        current_lang = "Russian"
+    else:
+        translation_lang = "English"
+        second_lang = "Duch"
         current_lang = curr_lang
 
     prompt_template = PromptTemplate.from_template("Translate the message from {current_lang} to "
