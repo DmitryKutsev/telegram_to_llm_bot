@@ -1,0 +1,25 @@
+[project]
+name = "telegram_to_llm_bot"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "dima_in_the_forest", email = "da.kutsev@gmail.com"},
+]
+dependencies = [
+    "openai>=1.30.1",
+    "langchain==0.0.303",
+    "telebot==0.0.5",
+    "langdetect",
+    "python-dotenv>=1.0.1",
+    "together>=1.1.5",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true

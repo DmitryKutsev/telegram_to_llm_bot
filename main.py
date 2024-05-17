@@ -1,12 +1,12 @@
 import os
+
 import openai
 import telebot
 from dotenv import load_dotenv
-
-from utils import detect_lang
-
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+
+from utils import detect_lang
 
 load_dotenv()
 
@@ -92,4 +92,5 @@ def echo_all(message: telebot.types.Message) -> None:
 
 
 if __name__ == '__main__':
-    bot.infinity_polling()
+    # bot.infinity_polling()
+    pass
