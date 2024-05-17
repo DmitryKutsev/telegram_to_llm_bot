@@ -3,78 +3,43 @@ import os
 import telebot
 from dotenv import load_dotenv
 from pathlib import Path
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate
 from openai import OpenAI
 from together import Together
 
-from utils import detect_lang
 
 load_dotenv()
 
 
-bot_key = os.getenv("BOT_KEY")
-together_api_key = os.getenv("TOGETHER_API_KEY")
-openai_api_key = os.getenv("OPENAI_API_KEY")
+BOT_KEY = os.getenv("BOT_KEY")
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-bot = telebot.TeleBot(bot_key)
-llm_client = Together(api_key=together_api_key)
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+together_client = Together(api_key=TOGETHER_API_KEY)
 
-openai_client = OpenAI(api_key=openai_api_key)
-together_client = Together(api_key=together_api_key)
+CURRENT_MODEL = "gpt-4o"
+CURRENT_LLM_CLIENT = openai_client
+
+bot = telebot.TeleBot(BOT_KEY)
+llm_client = Together(api_key=TOGETHER_API_KEY)
+
 
 system_prompt_template = Path("prompt_template.txt").read_text()
 
 last_msg_lst = [" "]
 
 
-def translate_msg(msg: str, llm_client=openai_client) -> str:
-    """Translates the given message from English to Russian or vice versa."""
-    curr_lang = detect_lang(msg)
+# def describe_msg(msg: str) -> str:
+#     """Describes the given message."""
 
-    if curr_lang == "en":
-        translation_lang = "Dutch"
-        second_lang = "Russian"
-        current_lang = "English"
-    elif curr_lang == "nl":
-        translation_lang = "English"
-        second_lang = "Russian"
-        current_lang = "Dutch"
-    elif curr_lang == "ru":
-        translation_lang = "Dutch"
-        second_lang = "English"
-        current_lang = "Russian"
-    else:
-        translation_lang = "English"
-        second_lang = "Duch"
-        current_lang = curr_lang
+#     prompt_template = PromptTemplate.from_template(
+#         "Please, split the given message into words and translate each word separately in two languages"
+#         " 1) in English and 2) in Russian. "
+#         "Message: {msg}"
+#     )
+#     prompt = prompt_template.format(msg=msg)
 
-    prompt_template = PromptTemplate.from_template(
-        "Translate the message from {current_lang} to "
-        "1) {translation_lang} and 2) {second_lang}."
-        "Message: {msg}"
-    )
-    prompt = prompt_template.format(
-        current_lang=current_lang,
-        translation_lang=translation_lang,
-        second_lang=second_lang,
-        msg=msg,
-    )
-
-    return llm_client.predict(prompt)
-
-
-def describe_msg(msg: str) -> str:
-    """Describes the given message."""
-
-    prompt_template = PromptTemplate.from_template(
-        "Please, split the given message into words and translate each word separately in two languages"
-        " 1) in English and 2) in Russian. "
-        "Message: {msg}"
-    )
-    prompt = prompt_template.format(msg=msg)
-
-    return llm.predict(prompt)
+#     return llm.predict(prompt)
 
 
 @bot.message_handler(commands=["start"])
@@ -95,20 +60,33 @@ def help_message(message: telebot.types.Message) -> None:
     )
 
 
-@bot.message_handler(commands=["describe"])
-def describe_message(message: telebot.types.Message) -> None:
-    """Describes the given message in English and Russian."""
+# @bot.message_handler(commands=["describe"])
+# def describe_message(message: telebot.types.Message) -> None:
+#     """Describes the given message in English and Russian."""
 
-    response = describe_msg(last_msg_lst[0])
-    bot.send_message(message.chat.id, response)
+#     response = describe_msg(last_msg_lst[0])
+#     bot.send_message(message.chat.id, response)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
-def echo_all(message: telebot.types.Message) -> None:
+def echo_all(
+    message: telebot.types.Message,
+    llm_client: OpenAI | Together = CURRENT_LLM_CLIENT,
+    model: str = CURRENT_MODEL,
+) -> None:
     """Handles all messages that are not commands."""
     last_msg_lst[0] = message.text
-    response = translate_msg(message.text)
-    bot.reply_to(message, response)
+    response = openai_client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": f"{system_prompt_template} {message.text}",
+            }
+        ],
+    )
+
+    bot.reply_to(message, response.choices[0].message.content)
 
 
 if __name__ == "__main__":
@@ -116,7 +94,10 @@ if __name__ == "__main__":
     response = together_client.chat.completions.create(
         model="meta-llama/Llama-3-8b-chat-hf",
         messages=[
-            {"role": "user", "content": f"{system_prompt_template} What are some fun things to do in New York"}
+            {
+                "role": "user",
+                "content": f"{system_prompt_template} What are some fun things to do in New York",
+            }
         ],
     )
 
@@ -125,7 +106,10 @@ if __name__ == "__main__":
     response = openai_client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "user", "content": f"{system_prompt_template} What are some fun things to do in New York"}
+            {
+                "role": "user",
+                "content": f"{system_prompt_template} What are some fun things to do in New York",
+            }
         ],
     )
     print(response.choices[0].message.content, "Chatgpt")
