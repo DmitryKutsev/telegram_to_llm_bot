@@ -2,6 +2,7 @@ import os
 
 import telebot
 from dotenv import load_dotenv
+from pathlib import Path
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from openai import OpenAI
@@ -21,6 +22,8 @@ llm_client = Together(api_key=together_api_key)
 
 openai_client = OpenAI(api_key=openai_api_key)
 together_client = Together(api_key=together_api_key)
+
+system_prompt_template = Path("prompt_template.txt").read_text()
 
 last_msg_lst = [" "]
 
@@ -63,6 +66,7 @@ def translate_msg(msg: str, llm_client=openai_client) -> str:
 
 def describe_msg(msg: str) -> str:
     """Describes the given message."""
+
     prompt_template = PromptTemplate.from_template(
         "Please, split the given message into words and translate each word separately in two languages"
         " 1) in English and 2) in Russian. "
@@ -112,7 +116,7 @@ if __name__ == "__main__":
     response = together_client.chat.completions.create(
         model="meta-llama/Llama-3-8b-chat-hf",
         messages=[
-            {"role": "user", "content": "What are some fun things to do in New York"}
+            {"role": "user", "content": f"{system_prompt_template} What are some fun things to do in New York"}
         ],
     )
 
@@ -121,7 +125,7 @@ if __name__ == "__main__":
     response = openai_client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "user", "content": "What are some fun things to do in New York"}
+            {"role": "user", "content": f"{system_prompt_template} What are some fun things to do in New York"}
         ],
     )
     print(response.choices[0].message.content, "Chatgpt")
