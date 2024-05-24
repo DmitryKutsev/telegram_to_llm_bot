@@ -6,6 +6,24 @@ import telebot
 from dotenv import load_dotenv
 from openai import OpenAI
 from together import Together
+from loguru import logger
+from telegram import (
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
+
 
 load_dotenv()
 
@@ -38,6 +56,8 @@ TOGETHER_MODELS_LIST = [
     "togethercomputer/RedPajama-INCITE-7B-Chat",
     "togethercomputer/alpaca-7b",
 ]
+
+ALL_MODELS_LIST = TOGETHER_MODELS_LIST + [CURRENT_MODEL]
 
 MODELS_IN_USE_LIST = [CURRENT_MODEL]
 CLIENTS_IN_USE_LIST = [CURRENT_LLM_CLIENT]
@@ -117,21 +137,31 @@ def list_prompt_templates(
 
 
 @bot.message_handler(commands=["change_llm"])
-def describe_message(message: telebot.types.Message) -> None:
+def change_llm(message: telebot.types.Message) -> None:
     """Changes an llm instance."""
-    if message.text not in TOGETHER_MODELS_LIST:
+    curr_message = message.text.split(" ")[1]
+    if curr_message not in ALL_MODELS_LIST:
+        response_msg = f"Haven't found model {curr_message} in the list. Changing to {MODELS_IN_USE_LIST[-1]}."
+        bot.send_message(message.chat.id, response_msg)
+
+    if curr_message not in TOGETHER_MODELS_LIST:
         CLIENTS_IN_USE_LIST[-1] = openai_client
         MODELS_IN_USE_LIST[-1] = "gpt-4o"
         response_msg = (
-            "Haven't found model in the list. Changing to default {CURRENT_MODEL}."
+            f"Haven't found model in the list. Changing to default {MODELS_IN_USE_LIST[-1]}."
         )
         bot.send_message(message.chat.id, response_msg)
     else:
         CLIENTS_IN_USE_LIST[-1] = together_client  # noqa: F841
-        MODELS_IN_USE_LIST[-1] = message.text  # noqa: F841
+        MODELS_IN_USE_LIST[-1] = curr_message  # noqa: F841
 
-    response_msg = "You have successfully changed your llm to {CURRENT_MODEL}"
+    response_msg = f"You have successfully changed your llm to {MODELS_IN_USE_LIST[-1]}"
     bot.send_message(message.chat.id, response_msg)
+
+
+@bot.message_handler(commands=["list_llms"])
+def list_llms(message: telebot.types.Message) -> None:
+    bot.send_message(message.chat.id, "\n".join(ALL_MODELS_LIST))
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
@@ -151,5 +181,33 @@ def echo_all(message: telebot.types.Message) -> None:
     bot.reply_to(message, response.choices[0].message.content)
 
 
+async def car_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.message.from_user
+    context.user_data["car_type"] = update.message.text
+    cars = {"Sedan": "🚗", "SUV": "🚙", "Sports": "🏎️", "Electric": "⚡"}
+    logger.info("Car type of %s: %s", user.first_name, update.message.text)
+    await update.message.reply_text(
+        f"<b>You selected {update.message.text} car {cars[update.message.text]}.\n"
+        f"What color your car is?</b>",
+        parse_mode="HTML",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    # Define inline buttons for car color selection
+    keyboard = [
+        [InlineKeyboardButton("Red", callback_data="Red")],
+        [InlineKeyboardButton("Blue", callback_data="Blue")],
+        [InlineKeyboardButton("Black", callback_data="Black")],
+        [InlineKeyboardButton("White", callback_data="White")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "<b>Please choose:</b>", parse_mode="HTML", reply_markup=reply_markup
+    )
+
+    return CAR_COLOR
+
+
 if __name__ == "__main__":
     bot.infinity_polling()
+
