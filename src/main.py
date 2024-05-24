@@ -4,15 +4,14 @@ from pathlib import Path
 
 import telebot
 from dotenv import load_dotenv
-from openai import OpenAI
-from together import Together
 from loguru import logger
+from openai import OpenAI
 from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
 )
 from telegram.ext import (
     Application,
@@ -23,7 +22,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-
+from together import Together
 
 load_dotenv()
 
@@ -147,9 +146,7 @@ def change_llm(message: telebot.types.Message) -> None:
     if curr_message not in TOGETHER_MODELS_LIST:
         CLIENTS_IN_USE_LIST[-1] = openai_client
         MODELS_IN_USE_LIST[-1] = "gpt-4o"
-        response_msg = (
-            f"Haven't found model in the list. Changing to default {MODELS_IN_USE_LIST[-1]}."
-        )
+        response_msg = f"Haven't found model in the list. Changing to default {MODELS_IN_USE_LIST[-1]}."
         bot.send_message(message.chat.id, response_msg)
     else:
         CLIENTS_IN_USE_LIST[-1] = together_client  # noqa: F841
@@ -181,33 +178,5 @@ def echo_all(message: telebot.types.Message) -> None:
     bot.reply_to(message, response.choices[0].message.content)
 
 
-async def car_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.message.from_user
-    context.user_data["car_type"] = update.message.text
-    cars = {"Sedan": "🚗", "SUV": "🚙", "Sports": "🏎️", "Electric": "⚡"}
-    logger.info("Car type of %s: %s", user.first_name, update.message.text)
-    await update.message.reply_text(
-        f"<b>You selected {update.message.text} car {cars[update.message.text]}.\n"
-        f"What color your car is?</b>",
-        parse_mode="HTML",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-    # Define inline buttons for car color selection
-    keyboard = [
-        [InlineKeyboardButton("Red", callback_data="Red")],
-        [InlineKeyboardButton("Blue", callback_data="Blue")],
-        [InlineKeyboardButton("Black", callback_data="Black")],
-        [InlineKeyboardButton("White", callback_data="White")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "<b>Please choose:</b>", parse_mode="HTML", reply_markup=reply_markup
-    )
-
-    return CAR_COLOR
-
-
 if __name__ == "__main__":
     bot.infinity_polling()
-
