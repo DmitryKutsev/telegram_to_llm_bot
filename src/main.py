@@ -49,11 +49,15 @@ TOGETHER_MODELS_LIST = [
     "zero-one-ai/Yi-34B-Chat",
     "meta-llama/Llama-3-8b-chat-hf",
     "meta-llama/Llama-3-70b-chat-hf",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "Qwen/Qwen1.5-110B-Chat",
     "WizardLM/WizardLM-13B-V1.2",
     "togethercomputer/RedPajama-INCITE-7B-Chat",
     "togethercomputer/alpaca-7b",
+    "google/gemma-2-27b-it",
+    "Snowflake/snowflake-arctic-instruct",
+    "mistralai/Mistral-7B-Instruct-v0.3",
 ]
 
 ALL_MODELS_LIST = TOGETHER_MODELS_LIST + [CURRENT_MODEL]
