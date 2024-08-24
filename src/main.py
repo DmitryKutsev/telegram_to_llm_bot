@@ -27,9 +27,6 @@ from together import Together
 
 load_dotenv()
 
-print(111245)
-
-
 BOT_KEY = os.getenv("BOT_KEY")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -187,37 +184,48 @@ async def responce_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         chat_id=update.effective_chat.id, text=reply_string, parse_mode="HTML"
     )
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a message when the command /start is issued."""
+    user = update.effective_user
+    await update.message.reply_text(
+        rf"Hi {user.mention_html()}!",
+        parse_mode="HTML",
+        reply_markup=ReplyKeyboardRemove(),
+    )
 
 def run() -> None:
     """Run the bot."""
     print("starting app")
 
-    my_bot = Bot(token=BOT_KEY)
-    my_queue = asyncio.Queue()
-
-    updater = Updater(my_bot, my_queue)
-
-    responce_all_handler = MessageHandler(
-        filters.TEXT & (~filters.COMMAND), responce_all
-    )
-
-    application = Application.builder().updater(updater).build()
-
-    application.add_handler(responce_all_handler)
-    application.add_handler(CommandHandler("show_prompt", show_prompt_template))
-    application.add_handler(CommandHandler("show_model", show_curr_model))
-    application.add_handler(CommandHandler("change_llm", change_llm))
-    application.add_handler(CommandHandler("change_prompt", change_prompt_template))
-    application.add_handler(CommandHandler("restore_prompt", restore_prompt_template))
-    application.add_handler(CommandHandler("list_llms", list_llms))
-
-    # application.run_polling()
     application.run_webhook(
         listen="0.0.0.0",
         port=PORT,
         url_path=BOT_KEY,
         webhook_url=f"https://glacial-caverns-10538-4789bc1d8ae2.herokuapp.com/{BOT_KEY}",
     )
+
+
+my_bot = Bot(token=BOT_KEY)
+my_queue = asyncio.Queue()
+
+updater = Updater(my_bot, my_queue)
+
+response_all_handler = MessageHandler(
+    filters.TEXT & (~filters.COMMAND), responce_all
+)
+
+print("Building app")
+application = Application.builder().updater(updater).build()
+
+application.add_handler(response_all_handler)
+application.add_handler(CommandHandler("show_prompt", show_prompt_template))
+application.add_handler(CommandHandler("show_model", show_curr_model))
+application.add_handler(CommandHandler("change_llm", change_llm))
+application.add_handler(CommandHandler("change_prompt", change_prompt_template))
+application.add_handler(CommandHandler("restore_prompt", restore_prompt_template))
+application.add_handler(CommandHandler("list_llms", list_llms))
+print("Building is done")
+
 
 if __name__ == "__main__":
     run()
