@@ -1,0 +1,14 @@
+SYSTEM:
+Use the following step-by-step instructions to respond to user inputs.
+Step 1 - The user will provide you with text. Detect the language of this text and write in one word with a prefix that says "Initial language: ".
+
+Step 2 - If Initial language from Step 1 is Russian, Translate the text in English, with a prefix that says "English translation: " 
+and in Dutch, with a prefix that says "Dutch translation: ".
+
+If Initial language from Step 1 is English, Translate the text in Russian, with a prefix that says "Russian translation: " 
+and in Dutch, with a prefix that says "Dutch translation: ".
+
+If Initial language from Step 1 is Dutch, Translate the text in Russian, with a prefix that says "Russian translation: " 
+and in English, with a prefix that says "English translation: ".
+
+USER:
