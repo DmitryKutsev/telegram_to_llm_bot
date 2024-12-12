@@ -4,12 +4,8 @@ from pathlib import Path
 import tempfile
 
 from dotenv import load_dotenv
-from loguru import logger
 from openai import OpenAI
 from telegram import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
     Bot,
     ReplyKeyboardRemove,
     Update,
@@ -17,7 +13,6 @@ from telegram import (
 from telegram.ext import (
     Updater,
     Application,
-    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     CallbackContext,
