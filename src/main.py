@@ -1,6 +1,7 @@
 import os
 import asyncio
 from pathlib import Path
+import tempfile
 
 from dotenv import load_dotenv
 from loguru import logger
@@ -19,6 +20,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
+    CallbackContext,
     ConversationHandler,
     MessageHandler,
     filters,
@@ -30,7 +32,7 @@ load_dotenv()
 BOT_KEY = os.getenv("BOT_KEY")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-PORT = int(os.getenv('PORT', '5000'))
+PORT = int(os.getenv("PORT", "5000"))
 APP_NAME = os.getenv("APP_NAME", "glacial-caverns-10538")
 
 openai_client = OpenAI()
@@ -65,6 +67,7 @@ CLIENTS_IN_USE_LIST = [DEFAULT_LLM_CLIENT]
 TEMPLATES_IN_USE_LIST = [SYSTEM_PROMPT_TEMPLATE]
 
 last_msg_lst = [" "]
+
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels and ends the conversation."""
@@ -167,9 +170,28 @@ async def show_curr_model(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
 
 
-async def responce_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# CallbackContext
+# async def response_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def response_all(update: Update, context: CallbackContext) -> None:
     """Handles all messages that are not commands."""
-    last_msg_lst[0] = update.message.text
+    if update.message.text:
+        text = update.message.text
+
+    elif update.message.voice:
+        voice = update.message.voice
+        file_id = voice.file_id
+
+        file = await context.bot.get_file(file_id)
+        temp_path = tempfile.NamedTemporaryFile(delete=False, suffix=".ogg").name
+        await file.download_to_drive(temp_path)
+
+        transcription = openai_client.audio.transcriptions.create(
+            model="whisper-1", file=open(temp_path, "rb")
+        )
+        text = transcription.text
+        os.remove(temp_path)
+
+    last_msg_lst[0] = text
     response = CLIENTS_IN_USE_LIST[-1].chat.completions.create(
         model=MODELS_IN_USE_LIST[-1],
         messages=[
@@ -184,6 +206,7 @@ async def responce_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         chat_id=update.effective_chat.id, text=reply_string, parse_mode="HTML"
     )
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
@@ -192,6 +215,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         parse_mode="HTML",
         reply_markup=ReplyKeyboardRemove(),
     )
+
 
 def run() -> None:
     """Run the bot."""
@@ -211,7 +235,7 @@ my_queue = asyncio.Queue()
 updater = Updater(my_bot, my_queue)
 
 response_all_handler = MessageHandler(
-    filters.TEXT & (~filters.COMMAND), responce_all
+    (filters.TEXT | filters.VOICE) & (~filters.COMMAND), response_all
 )
 
 print("Building app")
