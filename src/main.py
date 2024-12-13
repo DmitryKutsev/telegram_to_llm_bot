@@ -21,7 +21,6 @@ from telegram.ext import (
     filters,
 )
 from together import Together
-import google.generativeai as google_genai
 
 load_dotenv()
 
@@ -35,7 +34,6 @@ WEBHOOK_LINK = os.getenv("WEBHOOK_LINK")
 openai_client = OpenAI()
 together_client = Together(api_key=TOGETHER_API_KEY)
 
-google_genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 DEFAULT_MODEL = "gpt-4o"
@@ -58,7 +56,6 @@ TOGETHER_MODELS_LIST = [
     "WizardLM/WizardLM-13B-V1.2",
     "togethercomputer/RedPajama-INCITE-7B-Chat",
     "togethercomputer/alpaca-7b",
-    "gemini-1.5-flash"
 ]
 
 ALL_MODELS_LIST = TOGETHER_MODELS_LIST + [DEFAULT_MODEL]
