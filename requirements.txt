@@ -7,3 +7,4 @@ together>=1.1.5
 telegram>=0.0.1
 loguru>=0.7.2
 python-telegram-bot[webhooks]>=21.2
+google-generativeai

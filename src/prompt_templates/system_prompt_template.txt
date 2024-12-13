@@ -11,4 +11,7 @@ and in Dutch, with a prefix that says "Dutch translation: ".
 If Initial language from Step 1 is Dutch, Translate the text in Russian, with a prefix that says "Russian translation: " 
 and in English, with a prefix that says "English translation: ".
 
+If Initial language from Step 1 is other language, Translate the text in Russian, with a prefix that says "Russian translation: " 
+and in English, with a prefix that says "English translation: " and Dutch, with a prefix that says "Dutch translation: ".
+
 USER:

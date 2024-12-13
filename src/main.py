@@ -21,6 +21,7 @@ from telegram.ext import (
     filters,
 )
 from together import Together
+import google.generativeai as google_genai
 
 load_dotenv()
 
@@ -29,9 +30,13 @@ TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PORT = int(os.getenv("PORT", "5000"))
 APP_NAME = os.getenv("APP_NAME", "glacial-caverns-10538")
+WEBHOOK_LINK = os.getenv("WEBHOOK_LINK")
 
 openai_client = OpenAI()
 together_client = Together(api_key=TOGETHER_API_KEY)
+
+google_genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
 DEFAULT_MODEL = "gpt-4o"
 DEFAULT_LLM_CLIENT = openai_client
@@ -45,14 +50,15 @@ SYSTEM_PROMPT_TEMPLATE = system_prompt_path.read_text()
 
 
 TOGETHER_MODELS_LIST = [
-    "zero-one-ai/Yi-34B-Chat",
-    "meta-llama/Llama-3-8b-chat-hf",
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "Qwen/QwQ-32B-Preview",
     "meta-llama/Llama-3-70b-chat-hf",
     "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "Qwen/Qwen1.5-110B-Chat",
     "WizardLM/WizardLM-13B-V1.2",
     "togethercomputer/RedPajama-INCITE-7B-Chat",
     "togethercomputer/alpaca-7b",
+    "gemini-1.5-flash"
 ]
 
 ALL_MODELS_LIST = TOGETHER_MODELS_LIST + [DEFAULT_MODEL]
@@ -220,7 +226,7 @@ def run() -> None:
         listen="0.0.0.0",
         port=PORT,
         url_path=BOT_KEY,
-        webhook_url=f"https://glacial-caverns-10538-4789bc1d8ae2.herokuapp.com/{BOT_KEY}",
+        webhook_url=f"{WEBHOOK_LINK}/{BOT_KEY}",
     )
 
 
